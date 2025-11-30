@@ -304,9 +304,9 @@ const Footer = () => (
   Professional imagery capturing the subtle drama of the world around us. Based in India, available worldwide.
   </p>
   <div className="flex gap-4 text-zinc-400">
-  <a href="#" className="hover:text-white"><Instagram size={24} /></a>
-  <a href="#" className="hover:text-white"><Twitter size={24} /></a>
-  <a href="#" className="hover:text-white"><Mail size={24} /></a>
+  <a href="https://instagram.com/yourusername" /></a>
+  <a href="https://x.com/yourusername" /></a>
+  <a href="mailto:your-email@gmail.com" /></a>
   </div>
   </div>
   <div>
