@@ -1,339 +1,187 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { Aperture, ShoppingBag, X, Camera, Sliders, ArrowRight, Instagram, Twitter, Mail, CheckCircle } from 'lucide-react';
+import { Aperture, ShoppingBag, X, Camera, Sliders, ArrowRight, Instagram, Twitter, Mail, CheckCircle, Upload, Trash2, Lock, LogOut } from 'lucide-react';
 
-// --- Mock Data ---
-const PHOTOS = [
-  {
-    id: 1,
-    title: "Midnight in Tokyo",
-    category: "Urban",
-    price: 4500,
-    src: "https://images.unsplash.com/photo-1503899036084-c55cdd92da26?q=80&w=1000&auto=format&fit=crop",
-    specs: "Sony A7III • 35mm • f/1.4 • ISO 800",
-    desc: "A cyber-noir perspective of Tokyo streets during a light rain."
-  },
-{
-  id: 2,
-  title: "Himalayan Solitude",
-  category: "Nature",
-  price: 6000,
-  src: "https://images.unsplash.com/photo-1519681393784-d120267933ba?q=80&w=1000&auto=format&fit=crop",
-  specs: "Canon R5 • 85mm • f/2.8 • ISO 100",
-  desc: "The untouched peaks of the Himalayas at golden hour."
-},
-{
-  id: 3,
-  title: "The Glassmaker",
-  category: "Portrait",
-  price: 3500,
-  src: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=1000&auto=format&fit=crop",
-  specs: "Fujifilm XT-4 • 50mm • f/1.2 • ISO 400",
-  desc: "An intimate portrait of a master craftsman at work."
-},
-{
-  id: 4,
-  title: "Geometric Shadows",
-  category: "Abstract",
-  price: 2500,
-  src: "https://images.unsplash.com/photo-1494438639946-1ebd1d20bf85?q=80&w=1000&auto=format&fit=crop",
-  specs: "Leica Q2 • 28mm • f/8 • ISO 200",
-  desc: "Architecture meets harsh sunlight creating perfect geometry."
-},
-{
-  id: 5,
-  title: "Monsoon Chaos",
-  category: "Urban",
-  price: 4200,
-  src: "https://images.unsplash.com/photo-1515165592879-1849288ca9bf?q=80&w=1000&auto=format&fit=crop",
-  specs: "Nikon Z6 • 24mm • f/2.8 • ISO 1600",
-  desc: "Capturing the movement of people escaping the sudden downpour."
-},
-{
-  id: 6,
-  title: "Silent Lake",
-  category: "Nature",
-  price: 5500,
-  src: "https://images.unsplash.com/photo-1472214103451-9374bd1c798e?q=80&w=1000&auto=format&fit=crop",
-  specs: "Sony A7RIV • 16mm • f/11 • ISO 50",
-  desc: "Long exposure shot of a glacial lake at dawn."
-},
-{
-  id: 7,
-  title: "Neon Dreams",
-  category: "Abstract",
-  price: 3000,
-  src: "https://images.unsplash.com/photo-1563089145-599997674d42?q=80&w=1000&auto=format&fit=crop",
-  specs: "Canon R6 • 50mm • f/1.8 • ISO 3200",
-  desc: "Abstract light trails and bokeh in the city center."
-},
-{
-  id: 8,
-  title: "Elder's Wisdom",
-  category: "Portrait",
-  price: 4000,
-  src: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=1000&auto=format&fit=crop",
-  specs: "Sony A7III • 85mm • f/1.4 • ISO 200",
-  desc: "A high-contrast black and white portrait emphasizing texture."
-}
-];
+// --- FIREBASE CONFIGURATION ---
+import { initializeApp } from "firebase/app";
+import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc } from "firebase/firestore";
+import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
-const CATEGORIES = ["All", "Urban", "Nature", "Portrait", "Abstract"];
+// Your Actual Keys (From Screenshot)
+const firebaseConfig = {
+  apiKey: "AIzaSyCNVB4E50jcIR-5IbAwF1f3W4hzRzQQ14Y",
+  authDomain: "photography-portfolio-0.firebaseapp.com",
+  projectId: "photography-portfolio-0",
+  storageBucket: "photography-portfolio-0.firebasestorage.app",
+  messagingSenderId: "532895898046",
+  appId: "1:532895898046:web:38501401d42f84f39f01ef"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+const storage = getStorage(app);
 
 // --- Components ---
 
-const Navbar = ({ cartCount, onOpenCart }) => (
-  <nav className="fixed top-0 w-full z-50 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-800">
-  <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-  <div className="flex justify-between items-center h-20">
-  <div className="flex-shrink-0 flex items-center gap-2 cursor-pointer">
-  <Aperture className="w-8 h-8 text-white" />
-  <span className="font-serif text-xl font-bold tracking-wider text-white">SOUVICK<span className="text-zinc-500">.PHOTO</span></span>
-  </div>
-  <div className="hidden md:flex space-x-8 text-sm uppercase tracking-widest text-zinc-400">
-  <a href="#" className="hover:text-white transition-colors">Portfolio</a>
-  <a href="#about" className="hover:text-white transition-colors">About</a>
-  <a href="#contact" className="hover:text-white transition-colors">Contact</a>
-  </div>
-  <div className="flex items-center">
-  <button
-  onClick={onOpenCart}
-  className="relative p-2 text-zinc-400 hover:text-white transition-colors group"
-  >
-  <ShoppingBag className="w-6 h-6 group-hover:scale-110 transition-transform" />
-  {cartCount > 0 && (
-    <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-black transform translate-x-1/4 -translate-y-1/4 bg-white rounded-full">
-    {cartCount}
-    </span>
-  )}
-  </button>
-  </div>
-  </div>
-  </div>
-  </nav>
-);
+const AdminLogin = ({ onLogin }) => {
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState(false);
 
-const Hero = () => (
-  <div className="relative h-[80vh] flex items-center justify-center overflow-hidden">
-  {/* Background Parallax Simulation */}
-  <div
-  className="absolute inset-0 bg-cover bg-center z-0 opacity-50 scale-105"
-  style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=2000&auto=format&fit=crop")' }}
-  ></div>
-  <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-transparent z-10"></div>
-
-  <div className="relative z-20 text-center px-4 max-w-4xl">
-  <p className="text-zinc-400 uppercase tracking-[0.3em] mb-4 text-sm animate-pulse">Fine Art Photography</p>
-  <h1 className="text-5xl md:text-7xl font-serif font-bold text-white mb-6 leading-tight">
-  Capturing the <span className="italic text-zinc-400">Silence</span><br/> Between Moments
-  </h1>
-  <p className="text-zinc-300 text-lg md:text-xl font-light mb-10 max-w-2xl mx-auto">
-  Limited edition prints and digital licenses for the discerning collector.
-  </p>
-  <a href="#gallery" className="inline-block px-8 py-3 border border-white text-white hover:bg-white hover:text-black transition-all duration-300 uppercase tracking-widest text-sm">
-  View Collection
-  </a>
-  </div>
-  </div>
-);
-
-const PhotoCard = ({ photo, onClick }) => (
-  <div
-  className="group relative mb-8 break-inside-avoid cursor-pointer overflow-hidden rounded-sm"
-  onClick={() => onClick(photo)}
-  >
-  <img
-  src={photo.src}
-  alt={photo.title}
-  className="w-full h-auto transform transition-transform duration-700 group-hover:scale-105 group-hover:brightness-110"
-  loading="lazy"
-  />
-  <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
-  <p className="text-xs text-zinc-400 uppercase tracking-wider mb-1">{photo.category}</p>
-  <h3 className="text-xl text-white font-serif italic mb-2">{photo.title}</h3>
-  <div className="flex justify-between items-center">
-  <span className="text-white font-mono">₹{photo.price}</span>
-  <span className="text-xs text-white border border-white/30 px-2 py-1 uppercase tracking-widest hover:bg-white hover:text-black transition-colors">View</span>
-  </div>
-  </div>
-  </div>
-);
-
-const Modal = ({ photo, isOpen, onClose, onAddToCart }) => {
-  if (!isOpen || !photo) return null;
+  const handleLogin = (e) => {
+    e.preventDefault();
+    // SIMPLE PASSWORD PROTECTION (Change 'admin123' to whatever you want)
+    if (password === "admin123") {
+      onLogin(true);
+    } else {
+      setError(true);
+    }
+  };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-    <div className="absolute inset-0 bg-black/90 backdrop-blur-sm" onClick={onClose}></div>
-    <div className="relative bg-zinc-900 w-full max-w-5xl rounded-lg overflow-hidden shadow-2xl flex flex-col md:flex-row max-h-[90vh]">
-    {/* Image Section */}
-    <div className="w-full md:w-2/3 bg-black flex items-center justify-center p-2 relative">
-    <button
-    onClick={onClose}
-    className="absolute top-4 left-4 p-2 bg-black/50 hover:bg-white hover:text-black text-white rounded-full transition-all md:hidden"
-    >
-    <X size={20} />
-    </button>
-    <img
-    src={photo.src}
-    alt={photo.title}
-    className="max-h-full max-w-full object-contain"
+    <div className="fixed inset-0 z-[100] bg-black flex items-center justify-center">
+    <form onSubmit={handleLogin} className="bg-zinc-900 p-8 rounded-lg border border-zinc-800 w-full max-w-sm">
+    <div className="flex justify-center mb-6">
+    <Lock className="text-white w-8 h-8" />
+    </div>
+    <h2 className="text-white text-center text-xl font-serif mb-6">Admin Access</h2>
+    <input
+    type="password"
+    placeholder="Enter Password"
+    className="w-full bg-black text-white p-3 mb-4 border border-zinc-700 focus:outline-none focus:border-white"
+    value={password}
+    onChange={(e) => setPassword(e.target.value)}
     />
-    </div>
-
-    {/* Details Section */}
-    <div className="w-full md:w-1/3 p-8 md:p-10 flex flex-col overflow-y-auto">
-    <div className="flex justify-between items-start mb-6">
-    <div>
-    <p className="text-zinc-500 text-xs uppercase tracking-[0.2em] mb-2">{photo.category} Collection</p>
-    <h2 className="text-3xl font-serif text-white">{photo.title}</h2>
-    </div>
-    <button onClick={onClose} className="text-zinc-500 hover:text-white hidden md:block">
-    <X size={24} />
+    {error && <p className="text-red-500 text-xs mb-4 text-center">Incorrect password</p>}
+    <button className="w-full bg-white text-black py-3 font-bold uppercase tracking-widest hover:bg-zinc-200">
+    Enter Dashboard
     </button>
-    </div>
-
-    <div className="space-y-6 flex-grow">
-    <p className="text-zinc-300 font-light leading-relaxed">
-    {photo.desc}
-    </p>
-
-    <div className="border-t border-zinc-800 pt-6">
-    <h4 className="text-xs text-zinc-500 uppercase tracking-wider mb-3">Technical Specs</h4>
-    <div className="grid grid-cols-2 gap-4 text-sm text-zinc-300 font-mono">
-    <div className="flex items-center gap-2">
-    <Camera size={16} />
-    <span>{photo.specs.split('•')[0]}</span>
-    </div>
-    <div className="flex items-center gap-2">
-    <Aperture size={16} />
-    <span>{photo.specs.split('•')[2]}</span>
-    </div>
-    <div className="flex items-center gap-2">
-    <Sliders size={16} />
-    <span>{photo.specs.split('•')[3]}</span>
-    </div>
-    </div>
-    </div>
-    </div>
-
-    <div className="mt-8 pt-6 border-t border-zinc-800">
-    <div className="flex justify-between items-end mb-4">
-    <span className="text-zinc-400 text-sm">Standard License</span>
-    <span className="text-2xl text-white font-light">₹{photo.price}</span>
-    </div>
-    <button
-    onClick={() => {
-      onAddToCart(photo);
-      onClose();
-    }}
-    className="w-full bg-white text-black py-4 font-bold uppercase tracking-widest hover:bg-zinc-200 transition-colors flex justify-center items-center gap-2"
-    >
-    Add to Cart <ArrowRight size={18} />
+    <button type="button" onClick={() => window.location.reload()} className="w-full mt-4 text-zinc-500 text-xs uppercase hover:text-white">
+    Back to Website
     </button>
-    </div>
-    </div>
-    </div>
+    </form>
     </div>
   );
 };
 
-const CartDrawer = ({ isOpen, onClose, cartItems, onRemoveItem }) => {
-  const total = cartItems.reduce((acc, item) => acc + item.price, 0);
+const AdminDashboard = ({ photos, onUploadSuccess, onDeletePhoto, onLogout }) => {
+  const [uploading, setUploading] = useState(false);
+  const [newPhoto, setNewPhoto] = useState({
+    title: "",
+    category: "Urban",
+    price: "",
+    specs: "",
+    desc: "",
+    file: null
+  });
+
+  const handleFileChange = (e) => {
+    if (e.target.files[0]) {
+      setNewPhoto({ ...newPhoto, file: e.target.files[0] });
+    }
+  };
+
+  const handleUpload = async (e) => {
+    e.preventDefault();
+    if (!newPhoto.file) return alert("Please select a photo");
+
+    setUploading(true);
+    try {
+      // 1. Upload Image to Storage
+      const storageRef = ref(storage, `photos/${Date.now()}_${newPhoto.file.name}`);
+      const snapshot = await uploadBytes(storageRef, newPhoto.file);
+      const downloadURL = await getDownloadURL(snapshot.ref);
+
+      // 2. Save Data to Firestore
+      await addDoc(collection(db, "photos"), {
+        title: newPhoto.title,
+        category: newPhoto.category,
+        price: Number(newPhoto.price),
+                   specs: newPhoto.specs,
+                   desc: newPhoto.desc,
+                   src: downloadURL,
+                   createdAt: new Date()
+      });
+
+      alert("Photo uploaded successfully!");
+      setNewPhoto({ title: "", category: "Urban", price: "", specs: "", desc: "", file: null });
+      onUploadSuccess(); // Refresh gallery
+    } catch (error) {
+      console.error("Error uploading: ", error);
+      alert("Upload failed. Check console.");
+    }
+    setUploading(false);
+  };
 
   return (
-    <div className={`fixed inset-0 z-[70] transition-opacity duration-300 ${isOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'}`}>
-    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
-    <div className={`absolute top-0 right-0 h-full w-full max-w-md bg-zinc-900 shadow-2xl transform transition-transform duration-300 ease-out flex flex-col ${isOpen ? 'translate-x-0' : 'translate-x-full'}`}>
-
-    <div className="p-6 border-b border-zinc-800 flex justify-between items-center">
-    <h2 className="text-xl font-serif text-white">Your Selection</h2>
-    <button onClick={onClose} className="text-zinc-400 hover:text-white">
-    <X size={24} />
+    <div className="min-h-screen bg-black text-white p-8">
+    <div className="max-w-4xl mx-auto">
+    <div className="flex justify-between items-center mb-12">
+    <h1 className="text-3xl font-serif">Admin Dashboard</h1>
+    <button onClick={onLogout} className="flex items-center gap-2 text-zinc-400 hover:text-white">
+    <LogOut size={20} /> Logout
     </button>
     </div>
 
-    <div className="flex-1 overflow-y-auto p-6 space-y-6">
-    {cartItems.length === 0 ? (
-      <div className="h-full flex flex-col items-center justify-center text-zinc-500 space-y-4">
-      <ShoppingBag className="w-16 h-16 opacity-20" />
-      <p>Your cart is empty.</p>
-      <button onClick={onClose} className="text-white underline underline-offset-4">Browse Gallery</button>
-      </div>
-    ) : (
-      cartItems.map((item, index) => (
-        <div key={`${item.id}-${index}`} className="flex gap-4">
-        <img src={item.src} className="w-20 h-20 object-cover rounded-sm" />
-        <div className="flex-1 flex flex-col justify-between">
-        <div>
-        <h3 className="text-white font-serif">{item.title}</h3>
-        <p className="text-zinc-500 text-xs uppercase">{item.category}</p>
-        </div>
-        <div className="flex justify-between items-center">
-        <span className="text-zinc-300">₹{item.price}</span>
-        <button onClick={() => onRemoveItem(index)} className="text-zinc-500 hover:text-red-400 text-xs uppercase tracking-wider">Remove</button>
-        </div>
-        </div>
-        </div>
-      ))
-    )}
+    {/* Upload Form */}
+    <div className="bg-zinc-900 p-8 rounded-lg border border-zinc-800 mb-12">
+    <h2 className="text-xl mb-6 flex items-center gap-2"><Upload size={20}/> Upload New Photo</h2>
+    <form onSubmit={handleUpload} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <input type="text" placeholder="Title" className="bg-black p-3 border border-zinc-700 text-white" required
+    value={newPhoto.title} onChange={e => setNewPhoto({...newPhoto, title: e.target.value})} />
+
+    <select className="bg-black p-3 border border-zinc-700 text-white"
+    value={newPhoto.category} onChange={e => setNewPhoto({...newPhoto, category: e.target.value})}>
+    <option>Urban</option>
+    <option>Nature</option>
+    <option>Portrait</option>
+    <option>Abstract</option>
+    </select>
+
+    <input type="number" placeholder="Price (₹)" className="bg-black p-3 border border-zinc-700 text-white" required
+    value={newPhoto.price} onChange={e => setNewPhoto({...newPhoto, price: e.target.value})} />
+
+    <input type="text" placeholder="Specs (e.g. Sony A7 • 35mm)" className="bg-black p-3 border border-zinc-700 text-white" required
+    value={newPhoto.specs} onChange={e => setNewPhoto({...newPhoto, specs: e.target.value})} />
+
+    <textarea placeholder="Description" className="bg-black p-3 border border-zinc-700 text-white md:col-span-2" rows="3" required
+    value={newPhoto.desc} onChange={e => setNewPhoto({...newPhoto, desc: e.target.value})}></textarea>
+
+    <div className="md:col-span-2">
+    <label className="block mb-2 text-zinc-400 text-sm">Select Photo</label>
+    <input type="file" onChange={handleFileChange} className="text-white" accept="image/*" required />
     </div>
 
-    {cartItems.length > 0 && (
-      <div className="p-6 bg-zinc-950 border-t border-zinc-800">
-      <div className="flex justify-between items-center mb-6">
-      <span className="text-zinc-400 uppercase tracking-wider text-sm">Total</span>
-      <span className="text-2xl text-white font-serif">₹{total}</span>
+    <button disabled={uploading} className="md:col-span-2 bg-white text-black py-3 font-bold uppercase tracking-widest hover:bg-zinc-200 disabled:opacity-50">
+    {uploading ? "Uploading..." : "Publish Photo"}
+    </button>
+    </form>
+    </div>
+
+    {/* Manage Photos */}
+    <h2 className="text-xl mb-6">Manage Gallery ({photos.length})</h2>
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+    {photos.map(photo => (
+      <div key={photo.id} className="bg-zinc-900 p-4 border border-zinc-800 flex flex-col justify-between">
+      <div>
+      <img src={photo.src} className="w-full h-40 object-cover mb-4 rounded" />
+      <h3 className="font-serif text-lg">{photo.title}</h3>
+      <p className="text-zinc-500 text-xs uppercase mb-2">{photo.category}</p>
       </div>
-      <button className="w-full bg-white text-black py-4 font-bold uppercase tracking-widest hover:bg-zinc-200 transition-colors">
-      Proceed to Checkout
+      <button
+      onClick={() => onDeletePhoto(photo.id)}
+      className="mt-4 flex items-center justify-center gap-2 text-red-400 hover:text-red-300 border border-red-900/30 p-2 w-full"
+      >
+      <Trash2 size={16} /> Delete
       </button>
-      <p className="text-center text-zinc-600 text-xs mt-4">Secure payment powered by Stripe (Demo)</p>
       </div>
-    )}
+    ))}
+    </div>
     </div>
     </div>
   );
 };
 
-const Footer = () => (
-  <footer className="bg-zinc-950 border-t border-zinc-900 pt-16 pb-8 px-4" id="contact">
-  <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-12 mb-12">
-  <div>
-  <h3 className="text-white font-serif text-xl mb-6">Souvick Photography</h3>
-  <p className="text-zinc-500 leading-relaxed mb-6">
-  Professional imagery capturing the subtle drama of the world around us. Based in India, available worldwide.
-  </p>
-  <div className="flex gap-4 text-zinc-400">
-  <a href="https://instagram.com/yourusername" /></a>
-  <a href="https://x.com/yourusername" /></a>
-  <a href="mailto:your-email@gmail.com" /></a>
-  </div>
-  </div>
-  <div>
-  <h4 className="text-white uppercase tracking-widest text-sm mb-6">Services</h4>
-  <ul className="space-y-3 text-zinc-500 text-sm">
-  <li><a href="#" className="hover:text-white transition-colors">Commercial Licensing</a></li>
-  <li><a href="#" className="hover:text-white transition-colors">Fine Art Prints</a></li>
-  <li><a href="#" className="hover:text-white transition-colors">Editorial Assignments</a></li>
-  <li><a href="#" className="hover:text-white transition-colors">Workshops</a></li>
-  </ul>
-  </div>
-  <div>
-  <h4 className="text-white uppercase tracking-widest text-sm mb-6">Newsletter</h4>
-  <p className="text-zinc-500 text-sm mb-4">New collections and exclusive print drops.</p>
-  <form className="flex border border-zinc-800 p-1" onSubmit={(e) => e.preventDefault()}>
-  <input type="email" placeholder="Email Address" className="bg-transparent text-white px-4 py-2 w-full focus:outline-none" />
-  <button className="bg-white text-black px-6 uppercase text-xs font-bold hover:bg-zinc-200">Join</button>
-  </form>
-  </div>
-  </div>
-  <div className="text-center border-t border-zinc-900 pt-8 text-zinc-600 text-xs">
-  &copy; 2025 Souvick Photography. All Rights Reserved.
-  </div>
-  </footer>
-);
-
-// --- Main App ---
+// --- Main App Logic ---
 
 export default function App() {
   const [activeCategory, setActiveCategory] = useState("All");
@@ -342,10 +190,44 @@ export default function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [toast, setToast] = useState(null);
 
+  // Admin State
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [photos, setPhotos] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Fetch Photos from Firebase
+  const fetchPhotos = async () => {
+    try {
+      const querySnapshot = await getDocs(collection(db, "photos"));
+      const fetchedPhotos = querySnapshot.docs.map(doc => ({
+        id: doc.id,
+        ...doc.data()
+      }));
+      setPhotos(fetchedPhotos);
+      setLoading(false);
+    } catch (err) {
+      console.error("Error fetching photos:", err);
+      // Fallback to empty if firebase fails or is not setup yet
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchPhotos();
+  }, []);
+
+  const deletePhoto = async (id) => {
+    if(window.confirm("Are you sure you want to delete this photo?")) {
+      await deleteDoc(doc(db, "photos", id));
+      fetchPhotos();
+    }
+  };
+
   const filteredPhotos = useMemo(() => {
-    if (activeCategory === "All") return PHOTOS;
-    return PHOTOS.filter(p => p.category === activeCategory);
-  }, [activeCategory]);
+    if (activeCategory === "All") return photos;
+    return photos.filter(p => p.category === activeCategory);
+  }, [activeCategory, photos]);
 
   const addToCart = (photo) => {
     setCart([...cart, photo]);
@@ -353,89 +235,125 @@ export default function App() {
     setTimeout(() => setToast(null), 3000);
   };
 
-  const removeFromCart = (index) => {
-    const newCart = [...cart];
-    newCart.splice(index, 1);
-    setCart(newCart);
-  };
+  if (showLogin) return <AdminLogin onLogin={(status) => { setIsAdmin(status); setShowLogin(false); }} />;
+  if (isAdmin) return <AdminDashboard photos={photos} onUploadSuccess={fetchPhotos} onDeletePhoto={deletePhoto} onLogout={() => setIsAdmin(false)} />;
 
   return (
     <div className="min-h-screen flex flex-col bg-zinc-950 text-zinc-100 font-sans antialiased selection:bg-white selection:text-black">
+    {/* STYLES */}
     <style>{`
-      ::-webkit-scrollbar {
-        width: 8px;
-      }
-      ::-webkit-scrollbar-track {
-        background: #09090b;
-      }
-      ::-webkit-scrollbar-thumb {
-        background: #27272a;
-        border-radius: 4px;
-      }
-      ::-webkit-scrollbar-thumb:hover {
-        background: #3f3f46;
-      }
-      .no-scrollbar::-webkit-scrollbar {
-        display: none;
-      }
-      .no-scrollbar {
-        -ms-overflow-style: none;
-        scrollbar-width: none;
-      }
+      ::-webkit-scrollbar { width: 8px; }
+      ::-webkit-scrollbar-track { background: #09090b; }
+      ::-webkit-scrollbar-thumb { background: #27272a; border-radius: 4px; }
+      ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
       `}</style>
 
-      <Navbar cartCount={cart.length} onOpenCart={() => setIsCartOpen(true)} />
+      {/* NAVBAR */}
+      <nav className="fixed top-0 w-full z-50 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-800">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="flex justify-between items-center h-20">
+      <div className="flex-shrink-0 flex items-center gap-2 cursor-pointer" onClick={() => window.scrollTo(0,0)}>
+      <Aperture className="w-8 h-8 text-white" />
+      <span className="font-serif text-xl font-bold tracking-wider text-white">SOUVICK<span className="text-zinc-500">.PHOTO</span></span>
+      </div>
+      <div className="flex items-center gap-6">
+      <button onClick={() => setShowLogin(true)} className="text-zinc-600 hover:text-white text-xs uppercase tracking-widest hidden md:block">
+      Admin Login
+      </button>
+      <button onClick={() => setIsCartOpen(true)} className="relative p-2 text-zinc-400 hover:text-white transition-colors group">
+      <ShoppingBag className="w-6 h-6 group-hover:scale-110 transition-transform" />
+      {cart.length > 0 && (
+        <span className="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-black transform translate-x-1/4 -translate-y-1/4 bg-white rounded-full">
+        {cart.length}
+        </span>
+      )}
+      </button>
+      </div>
+      </div>
+      </div>
+      </nav>
 
-      <Hero />
+      {/* HERO */}
+      <div className="relative h-[60vh] md:h-[80vh] flex items-center justify-center overflow-hidden">
+      <div className="absolute inset-0 bg-cover bg-center z-0 opacity-40" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=2000")' }}></div>
+      <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-transparent z-10"></div>
+      <div className="relative z-20 text-center px-4 max-w-4xl pt-20">
+      <h1 className="text-4xl md:text-7xl font-serif font-bold text-white mb-6">
+      Capturing the <span className="italic text-zinc-400">Silence</span>
+      </h1>
+      <p className="text-zinc-300 text-lg md:text-xl font-light mb-10 max-w-2xl mx-auto">
+      Limited edition prints and digital licenses.
+      </p>
+      </div>
+      </div>
 
+      {/* MAIN GALLERY */}
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full" id="gallery">
-      {/* Filters */}
       <div className="flex flex-wrap justify-center gap-6 mb-16">
-      {CATEGORIES.map(cat => (
-        <button
-        key={cat}
-        onClick={() => setActiveCategory(cat)}
-        className={`text-sm uppercase tracking-widest transition-all duration-300 pb-1 border-b-2 ${
-          activeCategory === cat
-          ? 'text-white border-white'
-          : 'text-zinc-500 border-transparent hover:text-zinc-300'
-        }`}
-        >
+      {["All", "Urban", "Nature", "Portrait", "Abstract"].map(cat => (
+        <button key={cat} onClick={() => setActiveCategory(cat)}
+        className={`text-sm uppercase tracking-widest pb-1 border-b-2 transition-all ${activeCategory === cat ? 'text-white border-white' : 'text-zinc-500 border-transparent hover:text-zinc-300'}`}>
         {cat}
         </button>
       ))}
       </div>
 
-      {/* Masonry Grid */}
-      <div className="columns-1 md:columns-2 lg:columns-3 gap-8 space-y-8">
-      {filteredPhotos.map(photo => (
-        <PhotoCard
-        key={photo.id}
-        photo={photo}
-        onClick={setSelectedPhoto}
-        />
-      ))}
-      </div>
+      {loading ? (
+        <div className="text-center text-zinc-500 py-20">Loading Gallery...</div>
+      ) : photos.length === 0 ? (
+        <div className="text-center text-zinc-500 py-20">
+        <p className="mb-4">No photos found.</p>
+        <button onClick={() => setShowLogin(true)} className="text-white underline">Login to upload photos</button>
+        </div>
+      ) : (
+        <div className="columns-1 md:columns-2 lg:columns-3 gap-8 space-y-8">
+        {filteredPhotos.map(photo => (
+          <div key={photo.id} className="group relative mb-8 break-inside-avoid cursor-pointer overflow-hidden rounded-sm" onClick={() => setSelectedPhoto(photo)}>
+          <img src={photo.src} alt={photo.title} loading="lazy" className="w-full h-auto transform transition-transform duration-700 group-hover:scale-105 group-hover:brightness-110" />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col justify-end p-6">
+          <p className="text-xs text-zinc-400 uppercase tracking-wider mb-1">{photo.category}</p>
+          <h3 className="text-xl text-white font-serif italic mb-2">{photo.title}</h3>
+          <p className="text-white font-mono">₹{photo.price}</p>
+          </div>
+          </div>
+        ))}
+        </div>
+      )}
       </main>
 
-      <Footer />
+      {/* MODAL */}
+      {selectedPhoto && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-black/90 backdrop-blur-sm" onClick={() => setSelectedPhoto(null)}></div>
+        <div className="relative bg-zinc-900 w-full max-w-5xl rounded-lg overflow-hidden shadow-2xl flex flex-col md:flex-row max-h-[90vh]">
+        <div className="w-full md:w-2/3 bg-black flex items-center justify-center p-2 relative">
+        <button onClick={() => setSelectedPhoto(null)} className="absolute top-4 left-4 p-2 bg-black/50 text-white rounded-full md:hidden"><X size={20}/></button>
+        <img src={selectedPhoto.src} className="max-h-full max-w-full object-contain" />
+        </div>
+        <div className="w-full md:w-1/3 p-8 flex flex-col overflow-y-auto">
+        <div className="flex justify-between mb-6">
+        <h2 className="text-3xl font-serif text-white">{selectedPhoto.title}</h2>
+        <button onClick={() => setSelectedPhoto(null)} className="hidden md:block text-zinc-500 hover:text-white"><X size={24}/></button>
+        </div>
+        <p className="text-zinc-300 font-light mb-6">{selectedPhoto.desc}</p>
+        <div className="grid grid-cols-2 gap-4 text-sm text-zinc-300 font-mono mb-8 border-t border-zinc-800 pt-6">
+        <div className="flex items-center gap-2"><Camera size={16}/> <span>{selectedPhoto.specs}</span></div>
+        </div>
+        <div className="mt-auto pt-6 border-t border-zinc-800">
+        <div className="flex justify-between items-end mb-4">
+        <span className="text-zinc-400 text-sm">License</span>
+        <span className="text-2xl text-white font-light">₹{selectedPhoto.price}</span>
+        </div>
+        <button onClick={() => { addToCart(selectedPhoto); setSelectedPhoto(null); }} className="w-full bg-white text-black py-4 font-bold uppercase tracking-widest hover:bg-zinc-200 flex justify-center items-center gap-2">
+        Add to Cart <ArrowRight size={18} />
+        </button>
+        </div>
+        </div>
+        </div>
+        </div>
+      )}
 
-      {/* Modals & Drawers */}
-      <Modal
-      photo={selectedPhoto}
-      isOpen={!!selectedPhoto}
-      onClose={() => setSelectedPhoto(null)}
-      onAddToCart={addToCart}
-      />
-
-      <CartDrawer
-      isOpen={isCartOpen}
-      onClose={() => setIsCartOpen(false)}
-      cartItems={cart}
-      onRemoveItem={removeFromCart}
-      />
-
-      {/* Toast Notification */}
+      {/* TOAST */}
       {toast && (
         <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-white text-black px-6 py-3 shadow-2xl z-[80] flex items-center gap-3 animate-bounce-in">
         <CheckCircle className="text-green-600 w-5 h-5" />
