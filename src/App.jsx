@@ -6,7 +6,7 @@ import { initializeApp } from "firebase/app";
 import { getFirestore, collection, getDocs, addDoc, deleteDoc, doc } from "firebase/firestore";
 import { getStorage, ref, uploadBytes, getDownloadURL } from "firebase/storage";
 
-// Your Actual Keys (From Screenshot)
+// Your Actual Keys
 const firebaseConfig = {
   apiKey: "AIzaSyCNVB4E50jcIR-5IbAwF1f3W4hzRzQQ14Y",
   authDomain: "photography-portfolio-0.firebaseapp.com",
@@ -29,7 +29,6 @@ const AdminLogin = ({ onLogin }) => {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    // SIMPLE PASSWORD PROTECTION (Change 'admin123' to whatever you want)
     if (password === "admin123") {
       onLogin(true);
     } else {
@@ -86,12 +85,10 @@ const AdminDashboard = ({ photos, onUploadSuccess, onDeletePhoto, onLogout }) =>
 
     setUploading(true);
     try {
-      // 1. Upload Image to Storage
       const storageRef = ref(storage, `photos/${Date.now()}_${newPhoto.file.name}`);
       const snapshot = await uploadBytes(storageRef, newPhoto.file);
       const downloadURL = await getDownloadURL(snapshot.ref);
 
-      // 2. Save Data to Firestore
       await addDoc(collection(db, "photos"), {
         title: newPhoto.title,
         category: newPhoto.category,
@@ -104,7 +101,7 @@ const AdminDashboard = ({ photos, onUploadSuccess, onDeletePhoto, onLogout }) =>
 
       alert("Photo uploaded successfully!");
       setNewPhoto({ title: "", category: "Urban", price: "", specs: "", desc: "", file: null });
-      onUploadSuccess(); // Refresh gallery
+      onUploadSuccess();
     } catch (error) {
       console.error("Error uploading: ", error);
       alert("Upload failed. Check console.");
@@ -122,7 +119,6 @@ const AdminDashboard = ({ photos, onUploadSuccess, onDeletePhoto, onLogout }) =>
     </button>
     </div>
 
-    {/* Upload Form */}
     <div className="bg-zinc-900 p-8 rounded-lg border border-zinc-800 mb-12">
     <h2 className="text-xl mb-6 flex items-center gap-2"><Upload size={20}/> Upload New Photo</h2>
     <form onSubmit={handleUpload} className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -157,7 +153,6 @@ const AdminDashboard = ({ photos, onUploadSuccess, onDeletePhoto, onLogout }) =>
     </form>
     </div>
 
-    {/* Manage Photos */}
     <h2 className="text-xl mb-6">Manage Gallery ({photos.length})</h2>
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
     {photos.map(photo => (
@@ -189,14 +184,11 @@ export default function App() {
   const [cart, setCart] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [toast, setToast] = useState(null);
-
-  // Admin State
   const [isAdmin, setIsAdmin] = useState(false);
   const [showLogin, setShowLogin] = useState(false);
   const [photos, setPhotos] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  // Fetch Photos from Firebase
   const fetchPhotos = async () => {
     try {
       const querySnapshot = await getDocs(collection(db, "photos"));
@@ -208,7 +200,6 @@ export default function App() {
       setLoading(false);
     } catch (err) {
       console.error("Error fetching photos:", err);
-      // Fallback to empty if firebase fails or is not setup yet
       setLoading(false);
     }
   };
@@ -240,7 +231,6 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col bg-zinc-950 text-zinc-100 font-sans antialiased selection:bg-white selection:text-black">
-    {/* STYLES */}
     <style>{`
       ::-webkit-scrollbar { width: 8px; }
       ::-webkit-scrollbar-track { background: #09090b; }
@@ -248,7 +238,6 @@ export default function App() {
       ::-webkit-scrollbar-thumb:hover { background: #3f3f46; }
       `}</style>
 
-      {/* NAVBAR */}
       <nav className="fixed top-0 w-full z-50 bg-zinc-950/80 backdrop-blur-md border-b border-zinc-800">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <div className="flex justify-between items-center h-20">
@@ -257,9 +246,15 @@ export default function App() {
       <span className="font-serif text-xl font-bold tracking-wider text-white">SOUVICK<span className="text-zinc-500">.PHOTO</span></span>
       </div>
       <div className="flex items-center gap-6">
-      <button onClick={() => setShowLogin(true)} className="text-zinc-600 hover:text-white text-xs uppercase tracking-widest hidden md:block">
+
+      {/* UPDATED ADMIN BUTTON: Now clearly visible */}
+      <button
+      onClick={() => setShowLogin(true)}
+      className="border border-white/30 px-4 py-2 text-white hover:bg-white hover:text-black transition-all text-xs uppercase tracking-widest font-bold hidden md:block"
+      >
       Admin Login
       </button>
+
       <button onClick={() => setIsCartOpen(true)} className="relative p-2 text-zinc-400 hover:text-white transition-colors group">
       <ShoppingBag className="w-6 h-6 group-hover:scale-110 transition-transform" />
       {cart.length > 0 && (
@@ -273,7 +268,6 @@ export default function App() {
       </div>
       </nav>
 
-      {/* HERO */}
       <div className="relative h-[60vh] md:h-[80vh] flex items-center justify-center overflow-hidden">
       <div className="absolute inset-0 bg-cover bg-center z-0 opacity-40" style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?q=80&w=2000")' }}></div>
       <div className="absolute inset-0 bg-gradient-to-t from-zinc-950 via-zinc-950/50 to-transparent z-10"></div>
@@ -287,7 +281,6 @@ export default function App() {
       </div>
       </div>
 
-      {/* MAIN GALLERY */}
       <main className="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 w-full" id="gallery">
       <div className="flex flex-wrap justify-center gap-6 mb-16">
       {["All", "Urban", "Nature", "Portrait", "Abstract"].map(cat => (
@@ -321,7 +314,6 @@ export default function App() {
       )}
       </main>
 
-      {/* MODAL */}
       {selectedPhoto && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
         <div className="absolute inset-0 bg-black/90 backdrop-blur-sm" onClick={() => setSelectedPhoto(null)}></div>
@@ -353,7 +345,6 @@ export default function App() {
         </div>
       )}
 
-      {/* TOAST */}
       {toast && (
         <div className="fixed bottom-8 left-1/2 transform -translate-x-1/2 bg-white text-black px-6 py-3 shadow-2xl z-[80] flex items-center gap-3 animate-bounce-in">
         <CheckCircle className="text-green-600 w-5 h-5" />
